@@ -3,8 +3,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hotspotconnect.databinding.ActivityMainBinding
@@ -22,6 +24,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var countDownTimer: CountDownTimer? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -33,6 +38,15 @@ class MainActivity : AppCompatActivity() {
             intent.setClassName("com.android.settings", "com.android.settings.TetherSettings")
             startActivity(intent)
         }
+
+        binding.bt1Min.setOnClickListener {
+            startCountdownTimer(1 * 60 * 1000)
+        }
+
+        binding.bt2Min.setOnClickListener {
+            startCountdownTimer(2 * 60 * 1000)
+        }
+
 
         // Register receiver to listen for Wi-Fi state changes
         registerReceiver(networkStateReceiver, IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION))
@@ -51,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         unregisterReceiver(networkStateReceiver)
         handler.removeCallbacks(statusChecker)
+        countDownTimer?.cancel()
     }
 
     private val networkStateReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -77,4 +92,32 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
             false
         }
+
+    private fun startCountdownTimer(duration: Long) {
+        countDownTimer?.cancel()
+        countDownTimer = object : CountDownTimer(duration, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                val minutes = (millisUntilFinished / 1000) / 60
+                val seconds = (millisUntilFinished / 1000) % 60
+                binding.tvCountdown.text = String.format("%02d:%02d", minutes, seconds)
+            }
+
+            override fun onFinish() {
+                binding.tvCountdown.text = "00:00"
+                turnOffHotspot()
+            }
+        }.start()
+    }
+
+    private fun turnOffHotspot() {
+        try {
+            val method = wifiManager!!.javaClass.getMethod("setWifiApEnabled", WifiConfiguration::class.java, Boolean::class.javaPrimitiveType)
+            method.invoke(wifiManager, null, false)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        updateHotspotStatus()
+    }
+
+
 }
