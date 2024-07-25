@@ -1,15 +1,16 @@
-package com.example.hotspotconnect
+package com.example.hotspotconnect.activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.hotspotconnect.databinding.ActivityMainBinding
+import com.example.hotspotconnect.utils.visible
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,7 +26,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var countDownTimer: CountDownTimer? = null
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,10 +111,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun turnOffHotspot() {
         try {
-            val method = wifiManager!!.javaClass.getMethod("setWifiApEnabled", WifiConfiguration::class.java, Boolean::class.javaPrimitiveType)
-            method.invoke(wifiManager, null, false)
+            val intent = Intent(Intent.ACTION_MAIN)
+            intent.setClassName("com.android.settings", "com.android.settings.TetherSettings")
+            startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("MainActivity", "Error turning off hotspot", e)
         }
         updateHotspotStatus()
     }
